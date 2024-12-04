@@ -7,7 +7,7 @@ import { formatDate } from "../utils/dateFormatter";
 import { generateInvoiceNumber } from "../utils/invoiceNumberGenerator";
 import os from "os";
 
-const NUM_PDFS_TO_GENERATE = 100_000; // Change this number for your own testing
+const NUM_PDFS_TO_GENERATE = 1_000_000; // Change this number for your own testing
 
 // Options for PDF generation
 const defaultPdfOptions: PDFOptions = {
