@@ -1,73 +1,69 @@
-import puppeteer, { Browser, PDFOptions } from 'puppeteer';
-import { CustomPdfOptions } from '../types';
-import { defaultPdfOptions } from '../config/pdf.config';
-import fs from 'fs';
-import { Writable } from 'stream';
+import puppeteer, { Browser, Page, PDFOptions } from "puppeteer";
+import { defaultPdfOptions } from "../config/pdf.config";
+import { Readable, Writable } from "stream";
+import fs, { WriteStream } from "fs";
+
 export class PdfGenerator {
   private browser: Browser | null = null;
+  private page: Page | null = null;
 
   async initBrowser(): Promise<void> {
     if (!this.browser) {
-      this.browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
+      this.browser = await puppeteer.launch();
+
+      // Open a single reusable tab
+      const pages = await this.browser.pages();
+      this.page = pages[0] || (await this.browser.newPage());
     }
   }
 
-  async generatePdf(
-    html: string,
-    outputPath: string,
-    index: number,
-    options: CustomPdfOptions = defaultPdfOptions
-  ): Promise<void> {
-    if (!this.browser) {
-      throw new Error('Browser instance is not initialized. Call `initBrowser()` first.');
+  async generatePdf(html: string, outputPath: string, i: number, options: PDFOptions = defaultPdfOptions): Promise<void> {
+    if (!this.browser || !this.page) {
+      throw new Error("Browser or page is not initialized. Call `initBrowser()` first.");
     }
-    let page;
-    try {
-      page = await this.browser.newPage();
-      await page.setContent(html);
 
-      const pdfOptions: PDFOptions = {
+      // Set the HTML content
+      await this.page.setContent(html);
+
+      // Generate the PDF stream
+      const pdfStream = await this.page.createPDFStream({
         path: outputPath,
         format: options.format,
         printBackground: options.printBackground,
         margin: options.margin,
-      };
+      });
+      const nodeReadable = Readable.fromWeb(pdfStream);
 
-      const pdfStream = await page.createPDFStream(pdfOptions);
-      
-      const writable = new Writable({
-        write(_, __, callback) { 
-          callback(); // Do nothing with the chunks (discard)
-
+      // const writeStream = fs.createWriteStream(`${outputPath}-${i}.pdf`); // Uncomment to write to a file
+      const writeStream = new Writable({
+        write(_, __, callback) {
+          callback();
         }
       });
-      pdfStream.pipe(writable);
+    
+    // Pipe to null to consume the stream
+    nodeReadable.pipe(writeStream);
 
-      // Ensure the stream is fully consumed
-      await new Promise((resolve, reject) => {
-        writable.on('finish', () => {
+    // Ensure the stream is fully consumed
+    await new Promise<void>((resolve, reject) => {
+      writeStream.on('finish', () => {
 
-          console.log('PDF Generated', index)
-          return resolve('Done');
-        });
-        writable.on('error', reject);
-      });
-
-    } catch (error) {
-      throw new Error(`PDF generation failed: ${(error as Error).message}`);
-    } finally {
-      if (page) {
-        await page.close();
+      if (i % 1000 === 0) {
+        console.log(`PDF generated`, i);
       }
-    }
-  }
+        return resolve();
+      });
+      writeStream.on('error', reject);
+    });
+  } 
+  
+  
 
   async closeBrowser(): Promise<void> {
     if (this.browser) {
       await this.browser.close();
       this.browser = null;
+      this.page = null;
     }
   }
 }

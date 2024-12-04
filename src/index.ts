@@ -28,7 +28,7 @@ async function main(): Promise<void> {
     await pdfGenerator.initBrowser();
     const now = performance.now();
 
-    for (let i = 0; i < 100_000; i++) {
+    for (let i = 0; i < 100; i++) {
       await pdfGenerator.generatePdf(html, outputPath, i);
     };
     const end = performance.now();
