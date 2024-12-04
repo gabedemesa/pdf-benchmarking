@@ -3,7 +3,7 @@ import Handlebars from 'handlebars';
 import { TemplateData } from '../types';
 
 export class TemplateRenderer {
-  async render(templatePath: string, data: TemplateData): Promise<string> {
+  async render(templatePath: string, data: TemplateData | {}): Promise<string> {
     try {
       const templateContent = await fs.readFile(templatePath, 'utf-8');
       const template = Handlebars.compile(templateContent);

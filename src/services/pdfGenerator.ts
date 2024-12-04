@@ -34,12 +34,12 @@ export class PdfGenerator {
       });
       const nodeReadable = Readable.fromWeb(pdfStream);
 
-      // const writeStream = fs.createWriteStream(`${outputPath}-${i}.pdf`); // Uncomment to write to a file
-      const writeStream = new Writable({
-        write(_, __, callback) {
-          callback();
-        }
-      });
+      const writeStream = fs.createWriteStream(`${outputPath}-${i}.pdf`); // Uncomment to write to a file
+      // const writeStream = new Writable({
+      //   write(_, __, callback) {
+      //     callback();
+      //   }
+      // });
     
     // Pipe to null to consume the stream
     nodeReadable.pipe(writeStream);

@@ -5,6 +5,7 @@ import { TemplateData } from './types';
 import { formatDate } from './utils/dateFormatter';
 import { generateInvoiceNumber } from './utils/invoiceNumberGenerator';
 import { performance } from 'perf_hooks';
+
 async function main(): Promise<void> {
   try {
     // Initialize services
@@ -28,7 +29,7 @@ async function main(): Promise<void> {
     await pdfGenerator.initBrowser();
     const now = performance.now();
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 1; i++) {
       await pdfGenerator.generatePdf(html, outputPath, i);
     };
     const end = performance.now();
